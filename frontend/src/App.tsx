@@ -1,6 +1,8 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+import { ThumbsDown, ThumbsUp } from "@phosphor-icons/react";
 import { Badge } from "./components/ui/badge";
+import { Button } from "./components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,6 +14,7 @@ import { Skeleton } from "./components/ui/skeleton";
 import { Spinner } from "./components/ui/spinner";
 import { todayDate } from "./lib/functions/date";
 import { fetchQuoteOfTheDay } from "./api/sentences";
+import { reactToQuote, Reaction } from "./api/reactions";
 import type { Quote } from "./api/dto/QuoteOfTheDayResponse";
 
 function App() {
@@ -21,6 +24,34 @@ function App() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Reação do usuário: like (1), dislike (0) ou nenhuma. Os dois nunca ao mesmo tempo.
+  const [reaction, setReaction] = useState<Reaction | null>(null);
+  const [reacting, setReacting] = useState(false);
+  const [reactionMessage, setReactionMessage] = useState<string | null>(null);
+
+  async function handleReact(next: Reaction) {
+    if (!quote || reacting) return;
+
+    // Já reagiu desse jeito: evita spam de cliques.
+    if (reaction === next) {
+      setReactionMessage("Você já reagiu assim. Não fique clicando o tempo todo 🙂");
+      return;
+    }
+
+    setReacting(true);
+    setReactionMessage(null);
+    try {
+      await reactToQuote(quote.id, next);
+      setReaction(next);
+      setReactionMessage("Reação registrada! Evite reagir repetidamente.");
+    } catch (err) {
+      setReactionMessage((err as Error).message);
+    } finally {
+      // Cooldown para desestimular cliques em sequência.
+      setTimeout(() => setReacting(false), 3000);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -85,6 +116,38 @@ function App() {
                   - {quote.author}
                 </span>
               </p>
+
+              <div className="mt-4 flex flex-col items-end gap-1">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant={reaction === Reaction.Like ? "default" : "outline"}
+                    disabled={reacting}
+                    aria-pressed={reaction === Reaction.Like}
+                    aria-label="Curtir frase"
+                    onClick={() => handleReact(Reaction.Like)}
+                  >
+                    <ThumbsUp weight={reaction === Reaction.Like ? "fill" : "regular"} />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant={reaction === Reaction.Dislike ? "destructive" : "outline"}
+                    disabled={reacting}
+                    aria-pressed={reaction === Reaction.Dislike}
+                    aria-label="Não curtir frase"
+                    onClick={() => handleReact(Reaction.Dislike)}
+                  >
+                    <ThumbsDown weight={reaction === Reaction.Dislike ? "fill" : "regular"} />
+                  </Button>
+                </div>
+                {reactionMessage && (
+                  <p className="text-xs font-normal text-stone-500 text-right">
+                    {reactionMessage}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </CardContent>
