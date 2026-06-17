@@ -16,7 +16,7 @@ services:
       labels:
         - traefik.enable=true
         - traefik.docker.network=proxy-net
-        - traefik.http.routers.sentence-web.rule=Host(`${APP_HOST}`,`${APP_WWW_HOST}`)
+        - traefik.http.routers.sentence-web.rule=Host(`${APP_HOST}`)
         - traefik.http.routers.sentence-web.entrypoints=websecure
         - traefik.http.routers.sentence-web.tls=true
         - traefik.http.routers.sentence-web.tls.certresolver=le
@@ -47,7 +47,7 @@ services:
         - traefik.enable=true
         - traefik.docker.network=proxy-net
         - traefik.http.middlewares.sentence-api-strip.stripprefix.prefixes=/api
-        - traefik.http.routers.sentence-api.rule=Host(`${APP_HOST}`,`${APP_WWW_HOST}`) && (Path(`/api`) || PathPrefix(`/api/`))
+        - traefik.http.routers.sentence-api.rule=Host(`${APP_HOST}`) && (Path(`/api`) || PathPrefix(`/api/`))
         - traefik.http.routers.sentence-api.entrypoints=websecure
         - traefik.http.routers.sentence-api.middlewares=sentence-api-strip
         - traefik.http.routers.sentence-api.tls=true
