@@ -56,12 +56,16 @@ services:
         - traefik.http.services.sentence-api.loadbalancer.server.port=8080
 
   mysql:
-    image: ${SENTENCE_DB_IMAGE}
+    image: mysql:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: sentence
     volumes:
       - mysql_data:/var/lib/mysql
+    configs:
+      # Loaded by mysql entrypoint on FIRST init of an empty volume only.
+      - source: sentence_schema
+        target: /docker-entrypoint-initdb.d/001_create_frases.sql
     networks:
       - sentence-net
     deploy:
@@ -86,3 +90,9 @@ networks:
 
 volumes:
   mysql_data:
+
+configs:
+  sentence_schema:
+    # Bump the config name (e.g. sentence_schema_v2) if this SQL changes —
+    # swarm configs are immutable.
+    file: ./backend/migrations/001_create_frases.sql
