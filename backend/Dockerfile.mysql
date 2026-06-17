@@ -1,0 +1,6 @@
+# syntax=docker/dockerfile:1
+# MySQL image with schema baked in. Files in /docker-entrypoint-initdb.d run
+# (alphabetical) ONLY on first init of an empty data volume.
+# Build context = backend/ :  docker build -f backend/Dockerfile.mysql -t <img> backend
+FROM mysql:8.4
+COPY migrations/*.sql /docker-entrypoint-initdb.d/
